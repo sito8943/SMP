@@ -1,6 +1,10 @@
+from datetime import timedelta
+from decimal import Decimal
 from uuid import uuid4
 
 from django.db import models
+
+from .currency import convert_to_base
 
 
 class TimeStampedModel(models.Model):
@@ -43,6 +47,30 @@ class BillingCycle(TimeStampedModel):
     def __str__(self) -> str:
         return f"Every {self.interval} {self.unit}"
 
+    def monthly_multiplier(self) -> Decimal:
+        interval = Decimal(self.interval)
+        mapping = {
+            BillingCycleUnit.DAYS: Decimal("30") / interval,
+            BillingCycleUnit.WEEKS: Decimal("4.33") / interval,
+            BillingCycleUnit.MONTHS: Decimal("1") / interval,
+            BillingCycleUnit.YEARS: Decimal("1") / (interval * Decimal("12")),
+        }
+        return mapping.get(self.unit, Decimal("1"))
+
+    def annual_multiplier(self) -> Decimal:
+        return self.monthly_multiplier() * Decimal("12")
+
+    def next_date(self, from_date):
+        if self.unit == BillingCycleUnit.DAYS:
+            return from_date + timedelta(days=self.interval)
+        if self.unit == BillingCycleUnit.WEEKS:
+            return from_date + timedelta(weeks=self.interval)
+        if self.unit == BillingCycleUnit.MONTHS:
+            return from_date + timedelta(days=self.interval * 30)
+        if self.unit == BillingCycleUnit.YEARS:
+            return from_date + timedelta(days=self.interval * 365)
+        return from_date
+
 
 class Provider(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -82,6 +110,20 @@ class Subscription(TimeStampedModel):
     def __str__(self) -> str:
         return f"{self.name} ({self.provider.name})"
 
+    def monthly_cost_amount(self) -> Decimal:
+        cost = Decimal(self.cost_amount)
+        return cost * self.billing_cycle.monthly_multiplier()
+
+    def annual_cost_amount(self) -> Decimal:
+        cost = Decimal(self.cost_amount)
+        return cost * self.billing_cycle.annual_multiplier()
+
+    def monthly_cost_in_base(self) -> Decimal:
+        return convert_to_base(self.monthly_cost_amount(), self.cost_currency)
+
+    def annual_cost_in_base(self) -> Decimal:
+        return convert_to_base(self.annual_cost_amount(), self.cost_currency)
+
 
 class NotificationRule(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -114,3 +156,23 @@ class RenewalEvent(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.subscription} on {self.renewal_date:%Y-%m-%d}"
+
+
+class SubscriptionHistory(TimeStampedModel):
+    class EventType(models.TextChoices):
+        CREATED = "created", "Created"
+        UPDATED = "updated", "Updated"
+        STATUS_CHANGED = "status_changed", "Status changed"
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    subscription = models.ForeignKey(
+        Subscription, related_name="history", on_delete=models.CASCADE
+    )
+    event_type = models.CharField(max_length=32, choices=EventType.choices)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.subscription.name} - {self.get_event_type_display()}"

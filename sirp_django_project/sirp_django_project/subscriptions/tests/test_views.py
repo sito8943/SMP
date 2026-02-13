@@ -102,3 +102,56 @@ class ProviderCRUDTests(TestCase):
         login_url = reverse("login")
         expected = f"{login_url}?next={reverse('subscriptions:provider-list')}"
         self.assertRedirects(response, expected)
+
+
+class SubscriptionFeaturesTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user("analyst", password="pass1234")
+        self.provider = Provider.objects.create(name="DevSuite", category="Software")
+        self.cycle = BillingCycle.objects.create(interval=1, unit=BillingCycleUnit.MONTHS)
+        self.subscription = Subscription.objects.create(
+            name="DevSuite Pro",
+            provider=self.provider,
+            cost_amount=100,
+            cost_currency="USD",
+            billing_cycle=self.cycle,
+            status=SubscriptionStatus.ACTIVE,
+            start_date=timezone.now() - timedelta(days=30),
+            next_billing_date=timezone.now() + timedelta(days=15),
+        )
+        self.client.force_login(self.user)
+
+    def test_subscription_filters_by_provider(self):
+        other = Provider.objects.create(name="StreamIt", category="Streaming")
+        Subscription.objects.create(
+            name="Stream Basic",
+            provider=other,
+            cost_amount=9,
+            cost_currency="USD",
+            billing_cycle=self.cycle,
+            status=SubscriptionStatus.ACTIVE,
+            start_date=timezone.now(),
+            next_billing_date=timezone.now() + timedelta(days=20),
+        )
+
+        response = self.client.get(
+            reverse("subscriptions:subscription-list"),
+            {"provider": str(self.provider.id)},
+        )
+
+        self.assertContains(response, "DevSuite Pro")
+        self.assertNotContains(response, "Stream Basic")
+
+    def test_pause_resume_actions_record_history(self):
+        pause_url = reverse("subscriptions:subscription-pause", args=[self.subscription.pk])
+        resume_url = reverse("subscriptions:subscription-resume", args=[self.subscription.pk])
+
+        response = self.client.post(pause_url, follow=True)
+        self.subscription.refresh_from_db()
+        self.assertEqual(self.subscription.status, SubscriptionStatus.PAUSED)
+        self.assertContains(response, "paused")
+
+        response = self.client.post(resume_url, follow=True)
+        self.subscription.refresh_from_db()
+        self.assertEqual(self.subscription.status, SubscriptionStatus.ACTIVE)
+        self.assertContains(response, "resumed")

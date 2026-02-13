@@ -15,6 +15,54 @@
     <dt>Notes</dt>
     <dd>{{ object.notes|default:"-" }}</dd>
   </dl>
-  <a class="uk-button uk-button-primary" href="{% url 'subscriptions:subscription-edit' object.pk %}">Edit</a>
+  <div class="uk-margin">
+    <strong>Monthly cost:</strong>
+    {{ monthly_cost|floatformat:2 }} {{ object.cost_currency }} ({{ monthly_cost_base|floatformat:2 }} {{ base_currency|default:"USD" }})
+  </div>
+  <div class="uk-margin">
+    <strong>Annual cost:</strong>
+    {{ annual_cost|floatformat:2 }} {{ object.cost_currency }} ({{ annual_cost_base|floatformat:2 }} {{ base_currency|default:"USD" }})
+  </div>
+  <div class="uk-flex uk-flex-middle uk-grid-small" uk-grid>
+    <div><a class="uk-button uk-button-primary" href="{% url 'subscriptions:subscription-edit' object.pk %}">Edit</a></div>
+    {% if object.status != "paused" and object.status != "cancelled" %}
+    <div>
+      <form method="post" action="{% url 'subscriptions:subscription-pause' object.pk %}">
+        {% csrf_token %}
+        <button class="uk-button uk-button-default" type="submit">Pause</button>
+      </form>
+    </div>
+    {% endif %}
+    {% if object.status == "paused" %}
+    <div>
+      <form method="post" action="{% url 'subscriptions:subscription-resume' object.pk %}">
+        {% csrf_token %}
+        <button class="uk-button uk-button-default" type="submit">Resume</button>
+      </form>
+    </div>
+    {% endif %}
+    {% if object.status != "cancelled" %}
+    <div>
+      <form method="post" action="{% url 'subscriptions:subscription-cancel' object.pk %}">
+        {% csrf_token %}
+        <button class="uk-button uk-button-danger" type="submit">Cancel</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body uk-margin-top">
+  <h3 class="uk-card-title">History</h3>
+  <ul class="uk-list uk-list-divider">
+    {% for entry in history %}
+    <li>
+      <strong>{{ entry.get_event_type_display }}:</strong> {{ entry.description }}<br />
+      <span class="uk-text-meta">{{ entry.created_at }}</span>
+    </li>
+    {% empty %}
+    <li>No history yet.</li>
+    {% endfor %}
+  </ul>
 </div>
 {% endblock %}

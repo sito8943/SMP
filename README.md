@@ -13,6 +13,14 @@ python3 manage.py migrate
 python3 manage.py runserver
 ```
 
+## ✅ Current Capabilities
+
+- CRUD console with authentication, landing page, and dashboard summaries.
+- Subscription list filters by provider, status, and cost; shows monthly/annual spend aggregates.
+- Pause, resume, and cancel actions write to a subscription history timeline.
+- Notification rules, renewal events, and billing cycles managed through the UI.
+- Basic multi-currency awareness using configurable exchange rates in `settings.py`.
+
 ## 📁 Project Structure
 
 ```

@@ -33,4 +33,43 @@
     </div>
   </div>
 </div>
+
+<div class="uk-grid-small uk-child-width-1-2@s uk-margin-top" uk-grid>
+  <div>
+    <div class="uk-card uk-card-primary uk-card-body uk-text-center">
+      <h3 class="uk-card-title">Monthly total ({{ base_currency }})</h3>
+      <span class="uk-text-large uk-text-bold">{{ monthly_total|floatformat:2 }}</span>
+    </div>
+  </div>
+  <div>
+    <div class="uk-card uk-card-primary uk-card-body uk-text-center">
+      <h3 class="uk-card-title">Annual total ({{ base_currency }})</h3>
+      <span class="uk-text-large uk-text-bold">{{ annual_total|floatformat:2 }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body uk-margin-top">
+  <h3 class="uk-card-title">Upcoming renewals</h3>
+  <table class="uk-table uk-table-divider">
+    <thead>
+      <tr>
+        <th>Subscription</th>
+        <th>Date</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in upcoming_renewals %}
+      <tr>
+        <td>{{ event.subscription.name }}</td>
+        <td>{{ event.renewal_date }}</td>
+        <td>{{ event.amount_amount }} {{ event.amount_currency }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No renewals in the next 30 days.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

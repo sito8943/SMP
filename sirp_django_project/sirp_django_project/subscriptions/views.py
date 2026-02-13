@@ -1,9 +1,23 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
-from django.views import generic
+from datetime import timedelta
 
-from .models import BillingCycle, NotificationRule, Provider, RenewalEvent, Subscription
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views import View, generic
+
+from .models import (
+    BillingCycle,
+    NotificationRule,
+    Provider,
+    RenewalEvent,
+    Subscription,
+    SubscriptionHistory,
+    SubscriptionStatus,
+)
+from django.conf import settings
+from .services import summarize_costs, upcoming_renewals
 
 
 class LandingPageView(generic.TemplateView):
@@ -20,11 +34,18 @@ class DashboardView(LoginRequiredMixin, generic.TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        subs = Subscription.objects.all()
+        active_subs = subs.filter(status=SubscriptionStatus.ACTIVE)
+        summary = summarize_costs(active_subs)
         context["providers"] = Provider.objects.count()
-        context["subscriptions"] = Subscription.objects.count()
+        context["subscriptions"] = subs.count()
         context["billing_cycles"] = BillingCycle.objects.count()
         context["notifications"] = NotificationRule.objects.count()
         context["renewals_pending"] = RenewalEvent.objects.filter(is_processed=False).count()
+        context["monthly_total"] = summary.monthly_total
+        context["annual_total"] = summary.annual_total
+        context["upcoming_renewals"] = upcoming_renewals()
+        context["base_currency"] = settings.BASE_CURRENCY
         return context
 
 
@@ -81,10 +102,50 @@ class SubscriptionListView(LoginRequiredMixin, generic.ListView):
     model = Subscription
     template_name = "subscriptions/subscription_list.html"
 
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("provider", "billing_cycle")
+        provider = self.request.GET.get("provider")
+        status = self.request.GET.get("status")
+        cost_min = self.request.GET.get("cost_min")
+        cost_max = self.request.GET.get("cost_max")
+
+        if provider:
+            queryset = queryset.filter(provider__id=provider)
+        if status:
+            queryset = queryset.filter(status=status)
+        if cost_min:
+            queryset = queryset.filter(cost_amount__gte=cost_min)
+        if cost_max:
+            queryset = queryset.filter(cost_amount__lte=cost_max)
+        order = self.request.GET.get("order")
+        if order in {"cost_amount", "-cost_amount", "name", "-name"}:
+            queryset = queryset.order_by(order)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["providers"] = Provider.objects.all()
+        context["selected_provider"] = self.request.GET.get("provider", "")
+        context["selected_status"] = self.request.GET.get("status", "")
+        context["cost_min"] = self.request.GET.get("cost_min", "")
+        context["cost_max"] = self.request.GET.get("cost_max", "")
+        context["order"] = self.request.GET.get("order", "")
+        return context
 
 class SubscriptionDetailView(LoginRequiredMixin, generic.DetailView):
     model = Subscription
     template_name = "subscriptions/subscription_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        subscription: Subscription = self.object
+        context["monthly_cost"] = subscription.monthly_cost_amount()
+        context["annual_cost"] = subscription.annual_cost_amount()
+        context["monthly_cost_base"] = subscription.monthly_cost_in_base()
+        context["annual_cost_base"] = subscription.annual_cost_in_base()
+        context["history"] = subscription.history.all()[:20]
+        context["base_currency"] = settings.BASE_CURRENCY
+        return context
 
 
 class SubscriptionCreateView(LoginRequiredMixin, generic.CreateView):
@@ -111,15 +172,90 @@ class SubscriptionCreateView(LoginRequiredMixin, generic.CreateView):
                 form.fields[field_name].widget.input_type = "date"
         return form
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        SubscriptionHistory.objects.create(
+            subscription=self.object,
+            event_type=SubscriptionHistory.EventType.CREATED,
+            description="Subscription created",
+        )
+        return response
+
 
 class SubscriptionUpdateView(SubscriptionCreateView, generic.UpdateView):
-    pass
+    def form_valid(self, form):
+        changed = form.changed_data.copy()
+        response = super().form_valid(form)
+        if changed:
+            SubscriptionHistory.objects.create(
+                subscription=self.object,
+                event_type=SubscriptionHistory.EventType.UPDATED,
+                description=f"Updated fields: {', '.join(changed)}",
+            )
+        return response
 
 
 class SubscriptionDeleteView(LoginRequiredMixin, generic.DeleteView):
     model = Subscription
     template_name = "subscriptions/confirm_delete.html"
     success_url = reverse_lazy("subscriptions:subscription-list")
+
+
+class SubscriptionStatusActionView(LoginRequiredMixin, View):
+    action_name = ""
+
+    def post(self, request, pk):
+        subscription = get_object_or_404(Subscription, pk=pk)
+        error = self.perform_action(subscription)
+        if error:
+            messages.error(request, error)
+        else:
+            subscription.save()
+            SubscriptionHistory.objects.create(
+                subscription=subscription,
+                event_type=SubscriptionHistory.EventType.STATUS_CHANGED,
+                description=f"Subscription {self.action_name}",
+            )
+            messages.success(request, f"Subscription {subscription.name} {self.action_name}.")
+        return redirect("subscriptions:subscription-detail", pk=subscription.pk)
+
+    def perform_action(self, subscription: Subscription) -> str | None:
+        return None
+
+
+class SubscriptionPauseView(SubscriptionStatusActionView):
+    action_name = "paused"
+
+    def perform_action(self, subscription: Subscription) -> str | None:
+        if subscription.status == SubscriptionStatus.CANCELLED:
+            return "Cannot pause a cancelled subscription."
+        if subscription.status == SubscriptionStatus.PAUSED:
+            return "Subscription is already paused."
+        subscription.status = SubscriptionStatus.PAUSED
+        return None
+
+
+class SubscriptionResumeView(SubscriptionStatusActionView):
+    action_name = "resumed"
+
+    def perform_action(self, subscription: Subscription) -> str | None:
+        if subscription.status != SubscriptionStatus.PAUSED:
+            return "Only paused subscriptions can be resumed."
+        subscription.status = SubscriptionStatus.ACTIVE
+        subscription.next_billing_date = subscription.billing_cycle.next_date(timezone.now())
+        return None
+
+
+class SubscriptionCancelView(SubscriptionStatusActionView):
+    action_name = "cancelled"
+
+    def perform_action(self, subscription: Subscription) -> str | None:
+        if subscription.status == SubscriptionStatus.CANCELLED:
+            return "Subscription already cancelled."
+        subscription.status = SubscriptionStatus.CANCELLED
+        subscription.cancellation_date = timezone.now()
+        subscription.renewal_events.filter(is_processed=False).delete()
+        return None
 
 
 class NotificationRuleListView(LoginRequiredMixin, generic.ListView):

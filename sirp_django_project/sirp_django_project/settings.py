@@ -77,3 +77,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "subscriptions:dashboard"
 LOGOUT_REDIRECT_URL = "home"
+
+BASE_CURRENCY = "USD"
+EXCHANGE_RATES = {
+    "USD": 1.0,
+    "EUR": 1.08,
+    "GBP": 1.27,
+    "MXN": 0.058,
+    "ARS": 0.0011,
+}
