@@ -1,29 +1,35 @@
 {% extends "base.html" %}
 {% block title %}Notificaciones | SIRP{% endblock %}
 {% block content %}
-<div class="card">
-  <h2>Reglas de notificación</h2>
-  <p><a class="button" href="{% url 'subscriptions:notificationrule-add' %}">Nueva regla</a></p>
-  <table>
-    <tr>
-      <th>Suscripción</th>
-      <th>Momento</th>
-      <th>Activa</th>
-      <th>Acciones</th>
-    </tr>
-    {% for rule in object_list %}
-    <tr>
-      <td>{{ rule.subscription }}</td>
-      <td>{{ rule.get_timing_display }}</td>
-      <td>{{ rule.is_enabled|yesno:"Sí,No" }}</td>
-      <td class="actions">
-        <a href="{% url 'subscriptions:notificationrule-edit' rule.pk %}">Editar</a>
-        <a href="{% url 'subscriptions:notificationrule-delete' rule.pk %}">Eliminar</a>
-      </td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="4">Sin reglas.</td></tr>
-    {% endfor %}
+<div class="uk-card uk-card-default uk-card-body">
+  <div class="uk-flex uk-flex-between uk-flex-middle">
+    <h2 class="uk-card-title">Reglas de notificación</h2>
+    <a class="uk-button uk-button-primary" href="{% url 'subscriptions:notificationrule-add' %}">Nueva regla</a>
+  </div>
+  <table class="uk-table uk-table-divider uk-table-striped uk-margin-top">
+    <thead>
+      <tr>
+        <th>Suscripción</th>
+        <th>Momento</th>
+        <th>Activa</th>
+        <th class="uk-text-right">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rule in object_list %}
+      <tr>
+        <td>{{ rule.subscription }}</td>
+        <td>{{ rule.get_timing_display }}</td>
+        <td>{{ rule.is_enabled|yesno:"Sí,No" }}</td>
+        <td class="uk-text-right">
+          <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:notificationrule-edit' rule.pk %}">Editar</a>
+          <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:notificationrule-delete' rule.pk %}">Eliminar</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">Sin reglas.</td></tr>
+      {% endfor %}
+    </tbody>
   </table>
 </div>
 {% endblock %}
