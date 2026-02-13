@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{% block title %}SIRP Admin{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.13/dist/css/uikit.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.13/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.13/dist/js/uikit-icons.min.js"></script>
+    <style>
+      :root {
+        --sirp-primary: #1e73be;
+      }
+      .uk-navbar-container {
+        background: #fff;
+        border-bottom: 1px solid #e5e5e5;
+      }
+      .uk-card {
+        border: 1px solid #eaeaea;
+      }
+      .uk-button-primary,
+      .uk-badge-primary,
+      .uk-subnav-pill > .uk-active > a {
+        background-color: var(--sirp-primary);
+      }
+      .uk-button-primary:focus,
+      .uk-button-primary:hover {
+        background-color: #155b92;
+      }
+      body {
+        background: #f8fafc;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="uk-navbar-container">
+      <div class="uk-container">
+        <div class="uk-navbar" uk-navbar>
+          <div class="uk-navbar-left">
+            <a class="uk-navbar-item uk-logo" href="{% url 'home' %}">SIRP Console</a>
+            {% if user.is_authenticated %}
+            <ul class="uk-navbar-nav">
+              <li><a href="{% url 'subscriptions:dashboard' %}">Dashboard</a></li>
+              <li><a href="{% url 'subscriptions:provider-list' %}">Providers</a></li>
+              <li><a href="{% url 'subscriptions:billingcycle-list' %}">Billing Cycles</a></li>
+              <li><a href="{% url 'subscriptions:subscription-list' %}">Subscriptions</a></li>
+              <li><a href="{% url 'subscriptions:notificationrule-list' %}">Notifications</a></li>
+              <li><a href="{% url 'subscriptions:renewalevent-list' %}">Renewals</a></li>
+            </ul>
+            {% endif %}
+          </div>
+          <div class="uk-navbar-right">
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="uk-button uk-button-text uk-text-bold" type="submit">Logout</button>
+            </form>
+            {% else %}
+            <a class="uk-button uk-button-primary" href="{% url 'login' %}">Sign in</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="uk-section">
+      <div class="uk-container">
+        {% if messages %}
+        <div class="uk-margin">
+          {% for message in messages %}
+          <div class="uk-alert-primary" uk-alert>
+            <a class="uk-alert-close" uk-close></a>
+            <p>{{ message }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Billing cycles | SIRP{% endblock %}
+{% block content %}
+<div class="uk-card uk-card-default uk-card-body">
+  <div class="uk-flex uk-flex-between uk-flex-middle">
+    <h2 class="uk-card-title">Billing cycles</h2>
+    <a class="uk-button uk-button-primary" href="{% url 'subscriptions:billingcycle-add' %}">New cycle</a>
+  </div>
+  <table class="uk-table uk-table-divider uk-table-striped uk-margin-top">
+    <thead>
+      <tr>
+        <th>Interval</th>
+        <th>Unit</th>
+        <th class="uk-text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cycle in object_list %}
+      <tr>
+        <td>{{ cycle.interval }}</td>
+        <td>{{ cycle.get_unit_display }}</td>
+        <td class="uk-text-right">
+          <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:billingcycle-edit' cycle.pk %}">Edit</a>
+          <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:billingcycle-delete' cycle.pk %}">Delete</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No billing cycles yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

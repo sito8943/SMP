@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Renewals | SIRP{% endblock %}
+{% block content %}
+<div class="uk-card uk-card-default uk-card-body">
+  <div class="uk-flex uk-flex-between uk-flex-middle">
+    <h2 class="uk-card-title">Renewals</h2>
+    <a class="uk-button uk-button-primary" href="{% url 'subscriptions:renewalevent-add' %}">New renewal</a>
+  </div>
+  <table class="uk-table uk-table-divider uk-table-striped uk-margin-top">
+    <thead>
+      <tr>
+        <th>Subscription</th>
+        <th>Date</th>
+        <th>Amount</th>
+        <th>Processed</th>
+        <th class="uk-text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in object_list %}
+      <tr>
+        <td>{{ event.subscription }}</td>
+        <td>{{ event.renewal_date }}</td>
+        <td>{{ event.amount_amount }} {{ event.amount_currency }}</td>
+        <td>{{ event.is_processed|yesno:"Yes,No" }}</td>
+        <td class="uk-text-right">
+          <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:renewalevent-edit' event.pk %}">Edit</a>
+          <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:renewalevent-delete' event.pk %}">Delete</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No renewal events yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

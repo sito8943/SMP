@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Notification rules | SIRP{% endblock %}
+{% block content %}
+<div class="uk-card uk-card-default uk-card-body">
+  <div class="uk-flex uk-flex-between uk-flex-middle">
+    <h2 class="uk-card-title">Notification rules</h2>
+    <a class="uk-button uk-button-primary" href="{% url 'subscriptions:notificationrule-add' %}">New rule</a>
+  </div>
+  <table class="uk-table uk-table-divider uk-table-striped uk-margin-top">
+    <thead>
+      <tr>
+        <th>Subscription</th>
+        <th>Timing</th>
+        <th>Enabled</th>
+        <th class="uk-text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rule in object_list %}
+      <tr>
+        <td>{{ rule.subscription }}</td>
+        <td>{{ rule.get_timing_display }}</td>
+        <td>{{ rule.is_enabled|yesno:"Yes,No" }}</td>
+        <td class="uk-text-right">
+          <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:notificationrule-edit' rule.pk %}">Edit</a>
+          <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:notificationrule-delete' rule.pk %}">Delete</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No notification rules yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load form_extras %}
+{% block title %}Edit | SIRP{% endblock %}
+{% block content %}
+<div class="uk-card uk-card-default uk-card-body">
+  <form method="post" class="uk-form-stacked">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="uk-margin">
+      {% with widget_type=field|widget_input_type widget_class=field|widget_class_name %}
+        {% if widget_type == "checkbox" %}
+          <label class="uk-form-label">
+            {{ field|add_class:"uk-checkbox" }} {{ field.label }}
+          </label>
+        {% else %}
+          <label class="uk-form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <div class="uk-form-controls">
+            {% if widget_type == "textarea" %}
+              {{ field|add_class:"uk-textarea" }}
+            {% elif widget_class == "Select" %}
+              {{ field|add_class:"uk-select" }}
+            {% else %}
+              {{ field|add_class:"uk-input" }}
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% if field.help_text and field.field.widget.input_type != "checkbox" %}
+      <div class="uk-text-meta">{{ field.help_text }}</div>
+      {% endif %}
+      {% if field.errors %}
+      <div class="uk-text-danger">{{ field.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+    <button class="uk-button uk-button-primary" type="submit">Save</button>
+  </form>
+</div>
+{% endblock %}
