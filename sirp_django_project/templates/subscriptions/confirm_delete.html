@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Eliminar | SIRP{% endblock %}
+{% block content %}
+<div class="card">
+  <p>¿Seguro que deseas eliminar "{{ object }}"?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Sí, eliminar</button>
+  </form>
+</div>
+{% endblock %}

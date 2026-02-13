@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Detalle suscripción | SIRP{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>{{ object.name }}</h2>
+  <p>Proveedor: {{ object.provider }}</p>
+  <p>Costo: {{ object.cost_amount }} {{ object.cost_currency }}</p>
+  <p>Estado: {{ object.get_status_display }}</p>
+  <p>Próximo cobro: {{ object.next_billing_date }}</p>
+  <p>Notas: {{ object.notes|default:"-" }}</p>
+  <p><a href="{% url 'subscriptions:subscription-edit' object.pk %}">Editar</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Ciclos de cobro | SIRP{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Ciclos de cobro</h2>
+  <p><a class="button" href="{% url 'subscriptions:billingcycle-add' %}">Nuevo ciclo</a></p>
+  <table>
+    <tr>
+      <th>Intervalo</th>
+      <th>Unidad</th>
+      <th>Acciones</th>
+    </tr>
+    {% for cycle in object_list %}
+    <tr>
+      <td>{{ cycle.interval }}</td>
+      <td>{{ cycle.get_unit_display }}</td>
+      <td class="actions">
+        <a href="{% url 'subscriptions:billingcycle-edit' cycle.pk %}">Editar</a>
+        <a href="{% url 'subscriptions:billingcycle-delete' cycle.pk %}">Eliminar</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3">Sin ciclos.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

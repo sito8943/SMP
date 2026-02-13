@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Login | SIRP{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 400px; margin: auto;">
+  <h2>Iniciar sesión</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+{% endblock %}

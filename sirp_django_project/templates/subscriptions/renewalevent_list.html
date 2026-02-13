@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Renovaciones | SIRP{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Renovaciones</h2>
+  <p><a class="button" href="{% url 'subscriptions:renewalevent-add' %}">Nueva renovación</a></p>
+  <table>
+    <tr>
+      <th>Suscripción</th>
+      <th>Fecha</th>
+      <th>Monto</th>
+      <th>Procesada</th>
+      <th>Acciones</th>
+    </tr>
+    {% for event in object_list %}
+    <tr>
+      <td>{{ event.subscription }}</td>
+      <td>{{ event.renewal_date }}</td>
+      <td>{{ event.amount_amount }} {{ event.amount_currency }}</td>
+      <td>{{ event.is_processed|yesno:"Sí,No" }}</td>
+      <td class="actions">
+        <a href="{% url 'subscriptions:renewalevent-edit' event.pk %}">Editar</a>
+        <a href="{% url 'subscriptions:renewalevent-delete' event.pk %}">Eliminar</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Sin eventos.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

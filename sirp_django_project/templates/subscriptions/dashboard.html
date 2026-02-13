@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | SIRP{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>Resumen</h2>
+  <ul>
+    <li>Proveedores: {{ providers }}</li>
+    <li>Suscripciones: {{ subscriptions }}</li>
+    <li>Ciclos de cobro: {{ billing_cycles }}</li>
+    <li>Reglas de notificación: {{ notifications }}</li>
+    <li>Renovaciones pendientes: {{ renewals_pending }}</li>
+  </ul>
+</div>
+{% endblock %}

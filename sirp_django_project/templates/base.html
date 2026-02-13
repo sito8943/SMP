@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{% block title %}SIRP Admin{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        background: #20232a;
+        color: #fff;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      nav a {
+        color: #61dafb;
+        margin-right: 1rem;
+        text-decoration: none;
+      }
+      nav a:last-child {
+        margin-right: 0;
+      }
+      main {
+        padding: 2rem;
+      }
+      .card {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 0.6rem;
+        border-bottom: 1px solid #eee;
+        text-align: left;
+      }
+      a.button {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        background: #4caf50;
+        color: #fff;
+        border-radius: 4px;
+        text-decoration: none;
+      }
+      form button {
+        padding: 0.4rem 0.8rem;
+      }
+      .actions a {
+        margin-right: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong>SIRP Console</strong>
+      </div>
+      <nav>
+        <a href="{% url 'subscriptions:dashboard' %}">Dashboard</a>
+        <a href="{% url 'subscriptions:provider-list' %}">Providers</a>
+        <a href="{% url 'subscriptions:billingcycle-list' %}">Billing Cycles</a>
+        <a href="{% url 'subscriptions:subscription-list' %}">Subscriptions</a>
+        <a href="{% url 'subscriptions:notificationrule-list' %}">Notifications</a>
+        <a href="{% url 'subscriptions:renewalevent-list' %}">Renewals</a>
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" style="background:none;border:none;color:#61dafb;cursor:pointer;padding:0;">
+            Logout
+          </button>
+        </form>
+        {% endif %}
+      </nav>
+    </header>
+    <main>
+      {% if messages %}
+      <ul>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

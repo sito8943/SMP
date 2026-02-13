@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Proveedor | SIRP{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>{{ object.name }}</h2>
+  <p>Categoría: {{ object.category }}</p>
+  {% if object.website %}<p>Sitio: <a href="{{ object.website }}">{{ object.website }}</a></p>{% endif %}
+  <p><a href="{% url 'subscriptions:provider-edit' object.pk %}">Editar</a></p>
+</div>
+{% endblock %}
