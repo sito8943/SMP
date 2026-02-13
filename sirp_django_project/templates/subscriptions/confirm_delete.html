@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Eliminar | SIRP{% endblock %}
+{% block title %}Delete | SIRP{% endblock %}
 {% block content %}
 <div class="uk-card uk-card-default uk-card-body">
-  <h3 class="uk-card-title">Confirmar eliminación</h3>
-  <p>¿Seguro que deseas eliminar <strong>{{ object }}</strong>?</p>
+  <h3 class="uk-card-title">Confirm deletion</h3>
+  <p>Are you sure you want to delete <strong>{{ object }}</strong>?</p>
   <form method="post">
     {% csrf_token %}
-    <button class="uk-button uk-button-danger" type="submit">Sí, eliminar</button>
-    <a class="uk-button uk-button-default" href="javascript:history.back()">Cancelar</a>
+    <button class="uk-button uk-button-danger" type="submit">Yes, delete</button>
+    <a class="uk-button uk-button-default" href="javascript:history.back()">Cancel</a>
   </form>
 </div>
 {% endblock %}

@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Ciclos de cobro | SIRP{% endblock %}
+{% block title %}Billing cycles | SIRP{% endblock %}
 {% block content %}
 <div class="uk-card uk-card-default uk-card-body">
   <div class="uk-flex uk-flex-between uk-flex-middle">
-    <h2 class="uk-card-title">Ciclos de cobro</h2>
-    <a class="uk-button uk-button-primary" href="{% url 'subscriptions:billingcycle-add' %}">Nuevo ciclo</a>
+    <h2 class="uk-card-title">Billing cycles</h2>
+    <a class="uk-button uk-button-primary" href="{% url 'subscriptions:billingcycle-add' %}">New cycle</a>
   </div>
   <table class="uk-table uk-table-divider uk-table-striped uk-margin-top">
     <thead>
       <tr>
-        <th>Intervalo</th>
-        <th>Unidad</th>
-        <th class="uk-text-right">Acciones</th>
+        <th>Interval</th>
+        <th>Unit</th>
+        <th class="uk-text-right">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -20,12 +20,12 @@
         <td>{{ cycle.interval }}</td>
         <td>{{ cycle.get_unit_display }}</td>
         <td class="uk-text-right">
-          <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:billingcycle-edit' cycle.pk %}">Editar</a>
-          <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:billingcycle-delete' cycle.pk %}">Eliminar</a>
+          <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:billingcycle-edit' cycle.pk %}">Edit</a>
+          <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:billingcycle-delete' cycle.pk %}">Delete</a>
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="3">Sin ciclos.</td></tr>
+      <tr><td colspan="3">No billing cycles yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>

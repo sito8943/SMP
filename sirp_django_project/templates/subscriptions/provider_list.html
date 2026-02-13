@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Proveedores | SIRP{% endblock %}
+{% block title %}Providers | SIRP{% endblock %}
 {% block content %}
 <div class="uk-card uk-card-default uk-card-body">
   <div class="uk-flex uk-flex-between uk-flex-middle">
-    <h2 class="uk-card-title">Proveedores</h2>
-    <a class="uk-button uk-button-primary" href="{% url 'subscriptions:provider-add' %}">Nuevo proveedor</a>
+    <h2 class="uk-card-title">Providers</h2>
+    <a class="uk-button uk-button-primary" href="{% url 'subscriptions:provider-add' %}">New provider</a>
   </div>
   <table class="uk-table uk-table-divider uk-table-striped uk-table-middle uk-margin-top">
     <thead>
       <tr>
-        <th>Nombre</th>
-        <th>Categoría</th>
-        <th class="uk-text-right">Acciones</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th class="uk-text-right">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -20,12 +20,12 @@
         <td><a href="{% url 'subscriptions:provider-detail' provider.pk %}">{{ provider.name }}</a></td>
         <td>{{ provider.category }}</td>
         <td class="uk-text-right">
-          <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:provider-edit' provider.pk %}">Editar</a>
-          <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:provider-delete' provider.pk %}">Eliminar</a>
+          <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:provider-edit' provider.pk %}">Edit</a>
+          <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:provider-delete' provider.pk %}">Delete</a>
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="3">Sin proveedores.</td></tr>
+      <tr><td colspan="3">No providers yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>

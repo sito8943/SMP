@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Proveedor | SIRP{% endblock %}
+{% block title %}Provider | SIRP{% endblock %}
 {% block content %}
 <div class="uk-card uk-card-default uk-card-body">
   <h2 class="uk-card-title">{{ object.name }}</h2>
-  <p><span class="uk-text-bold">Categoría:</span> {{ object.category }}</p>
+  <p><span class="uk-text-bold">Category:</span> {{ object.category }}</p>
   {% if object.website %}
-  <p><span class="uk-text-bold">Sitio:</span> <a href="{{ object.website }}" target="_blank">{{ object.website }}</a></p>
+  <p><span class="uk-text-bold">Website:</span> <a href="{{ object.website }}" target="_blank">{{ object.website }}</a></p>
   {% endif %}
-  <a class="uk-button uk-button-primary" href="{% url 'subscriptions:provider-edit' object.pk %}">Editar</a>
+  <a class="uk-button uk-button-primary" href="{% url 'subscriptions:provider-edit' object.pk %}">Edit</a>
 </div>
 {% endblock %}
