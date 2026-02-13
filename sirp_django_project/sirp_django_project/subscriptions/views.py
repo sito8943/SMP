@@ -45,8 +45,16 @@ class ProviderCreateView(LoginRequiredMixin, generic.CreateView):
     success_url = reverse_lazy("subscriptions:provider-list")
 
 
+<<<<<<< HEAD
 class ProviderUpdateView(ProviderCreateView, generic.UpdateView):
     pass
+=======
+class ProviderUpdateView(LoginRequiredMixin, generic.UpdateView):
+    model = Provider
+    fields = ["name", "category", "website"]
+    template_name = "subscriptions/form.html"
+    success_url = reverse_lazy("subscriptions:provider-list")
+>>>>>>> django-2
 
 
 class ProviderDeleteView(LoginRequiredMixin, generic.DeleteView):
@@ -104,6 +112,7 @@ class SubscriptionCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = "subscriptions/form.html"
     success_url = reverse_lazy("subscriptions:subscription-list")
 
+<<<<<<< HEAD
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         for field_name in ("start_date", "next_billing_date", "cancellation_date"):
@@ -111,6 +120,8 @@ class SubscriptionCreateView(LoginRequiredMixin, generic.CreateView):
                 form.fields[field_name].widget.input_type = "date"
         return form
 
+=======
+>>>>>>> django-2
 
 class SubscriptionUpdateView(SubscriptionCreateView, generic.UpdateView):
     pass
@@ -155,12 +166,15 @@ class RenewalEventCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = "subscriptions/form.html"
     success_url = reverse_lazy("subscriptions:renewalevent-list")
 
+<<<<<<< HEAD
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         if "renewal_date" in form.fields:
             form.fields["renewal_date"].widget.input_type = "date"
         return form
 
+=======
+>>>>>>> django-2
 
 class RenewalEventUpdateView(RenewalEventCreateView, generic.UpdateView):
     pass

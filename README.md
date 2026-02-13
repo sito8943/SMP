@@ -2,6 +2,17 @@
 
 The Subscription Intelligence Research Platform (SIRP) is a research-grade subscription tracking system implemented using **Domain-Driven Design (DDD)**.
 
+## ⚙️ Plain Django Scaffold
+
+A vanilla Django project (no custom functionality) now lives under `sirp_django_project/`.  
+Run it like any default Django install:
+
+```bash
+cd sirp_django_project
+python3 manage.py migrate
+python3 manage.py runserver
+```
+
 ## 📁 Project Structure
 
 ```
