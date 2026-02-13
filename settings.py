@@ -17,7 +17,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "sirp_django_project.subscriptions",
+    "subscriptions",
 ]
 
 MIDDLEWARE = [
@@ -30,7 +30,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "sirp_django_project.urls"
+ROOT_URLCONF = "urls"
 
 TEMPLATES = [
     {
@@ -48,8 +48,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "sirp_django_project.wsgi.application"
-ASGI_APPLICATION = "sirp_django_project.asgi.application"
+WSGI_APPLICATION = "wsgi.application"
+ASGI_APPLICATION = "asgi.application"
 
 DATABASES = {
     "default": {
