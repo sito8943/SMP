@@ -1,6 +1,7 @@
-from datetime import timedelta
-
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -16,8 +17,29 @@ from .models import (
     SubscriptionHistory,
     SubscriptionStatus,
 )
-from django.conf import settings
 from .services import summarize_costs, upcoming_renewals
+
+
+def scope_queryset_for_user(queryset, user, owner_lookup: str = "owner"):
+    if user.is_superuser:
+        return queryset
+    return queryset.filter(**{owner_lookup: user})
+
+
+class SignUpView(generic.CreateView):
+    form_class = UserCreationForm
+    template_name = "registration/signup.html"
+    success_url = reverse_lazy("subscriptions:dashboard")
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect("subscriptions:dashboard")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        login(self.request, self.object)
+        return response
 
 
 class LandingPageView(generic.TemplateView):
@@ -29,76 +51,116 @@ class LandingPageView(generic.TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
 
+class UserScopedQuerysetMixin:
+    owner_lookup = "owner"
+
+    def scope_queryset(self, queryset):
+        return scope_queryset_for_user(queryset, self.request.user, self.owner_lookup)
+
+    def get_queryset(self):
+        return self.scope_queryset(super().get_queryset())
+
+
+class OwnerAssignCreateMixin:
+    def form_valid(self, form):
+        if not form.instance.owner_id:
+            form.instance.owner = self.request.user
+        return super().form_valid(form)
+
+
 class DashboardView(LoginRequiredMixin, generic.TemplateView):
     template_name = "subscriptions/dashboard.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        subs = Subscription.objects.all()
+        subs = scope_queryset_for_user(
+            Subscription.objects.select_related("provider", "billing_cycle"), self.request.user
+        )
         active_subs = subs.filter(status=SubscriptionStatus.ACTIVE)
+        notification_rules = scope_queryset_for_user(
+            NotificationRule.objects.all(),
+            self.request.user,
+            owner_lookup="subscription__owner",
+        )
+        pending_renewals = scope_queryset_for_user(
+            RenewalEvent.objects.filter(is_processed=False),
+            self.request.user,
+            owner_lookup="subscription__owner",
+        )
         summary = summarize_costs(active_subs)
-        context["providers"] = Provider.objects.count()
+
+        context["providers"] = scope_queryset_for_user(
+            Provider.objects.all(), self.request.user
+        ).count()
         context["subscriptions"] = subs.count()
-        context["billing_cycles"] = BillingCycle.objects.count()
-        context["notifications"] = NotificationRule.objects.count()
-        context["renewals_pending"] = RenewalEvent.objects.filter(is_processed=False).count()
+        context["billing_cycles"] = scope_queryset_for_user(
+            BillingCycle.objects.all(), self.request.user
+        ).count()
+        context["notifications"] = notification_rules.count()
+        context["renewals_pending"] = pending_renewals.count()
         context["monthly_total"] = summary.monthly_total
         context["annual_total"] = summary.annual_total
-        context["upcoming_renewals"] = upcoming_renewals()
+        context["upcoming_renewals"] = upcoming_renewals(user=self.request.user)
         context["base_currency"] = settings.BASE_CURRENCY
         return context
 
 
-class ProviderListView(LoginRequiredMixin, generic.ListView):
+class ProviderListView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.ListView):
     model = Provider
     template_name = "subscriptions/provider_list.html"
 
 
-class ProviderDetailView(LoginRequiredMixin, generic.DetailView):
+class ProviderDetailView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.DetailView):
     model = Provider
     template_name = "subscriptions/provider_detail.html"
 
 
-class ProviderCreateView(LoginRequiredMixin, generic.CreateView):
+class ProviderCreateView(OwnerAssignCreateMixin, LoginRequiredMixin, generic.CreateView):
     model = Provider
     fields = ["name", "category", "website"]
     template_name = "subscriptions/form.html"
     success_url = reverse_lazy("subscriptions:provider-list")
 
 
-class ProviderUpdateView(ProviderCreateView, generic.UpdateView):
+class ProviderUpdateView(
+    UserScopedQuerysetMixin, ProviderCreateView, generic.UpdateView
+):
     pass
 
 
-class ProviderDeleteView(LoginRequiredMixin, generic.DeleteView):
+class ProviderDeleteView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.DeleteView):
     model = Provider
     template_name = "subscriptions/confirm_delete.html"
     success_url = reverse_lazy("subscriptions:provider-list")
 
 
-class BillingCycleListView(LoginRequiredMixin, generic.ListView):
+class BillingCycleListView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.ListView):
     model = BillingCycle
     template_name = "subscriptions/billingcycle_list.html"
 
 
-class BillingCycleCreateView(LoginRequiredMixin, generic.CreateView):
+class BillingCycleCreateView(OwnerAssignCreateMixin, LoginRequiredMixin, generic.CreateView):
     model = BillingCycle
     fields = ["interval", "unit"]
     template_name = "subscriptions/form.html"
     success_url = reverse_lazy("subscriptions:billingcycle-list")
 
 
-class BillingCycleUpdateView(BillingCycleCreateView, generic.UpdateView):
+class BillingCycleUpdateView(
+    UserScopedQuerysetMixin, BillingCycleCreateView, generic.UpdateView
+):
     pass
 
 
-class BillingCycleDeleteView(LoginRequiredMixin, generic.DeleteView):
+class BillingCycleDeleteView(
+    UserScopedQuerysetMixin, LoginRequiredMixin, generic.DeleteView
+):
     model = BillingCycle
     template_name = "subscriptions/confirm_delete.html"
     success_url = reverse_lazy("subscriptions:billingcycle-list")
 
 
-class SubscriptionListView(LoginRequiredMixin, generic.ListView):
+class SubscriptionListView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.ListView):
     model = Subscription
     template_name = "subscriptions/subscription_list.html"
 
@@ -124,7 +186,7 @@ class SubscriptionListView(LoginRequiredMixin, generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["providers"] = Provider.objects.all()
+        context["providers"] = scope_queryset_for_user(Provider.objects.all(), self.request.user)
         context["selected_provider"] = self.request.GET.get("provider", "")
         context["selected_status"] = self.request.GET.get("status", "")
         context["cost_min"] = self.request.GET.get("cost_min", "")
@@ -132,7 +194,8 @@ class SubscriptionListView(LoginRequiredMixin, generic.ListView):
         context["order"] = self.request.GET.get("order", "")
         return context
 
-class SubscriptionDetailView(LoginRequiredMixin, generic.DetailView):
+
+class SubscriptionDetailView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.DetailView):
     model = Subscription
     template_name = "subscriptions/subscription_detail.html"
 
@@ -148,7 +211,7 @@ class SubscriptionDetailView(LoginRequiredMixin, generic.DetailView):
         return context
 
 
-class SubscriptionCreateView(LoginRequiredMixin, generic.CreateView):
+class SubscriptionFormMixin:
     model = Subscription
     fields = [
         "name",
@@ -167,11 +230,23 @@ class SubscriptionCreateView(LoginRequiredMixin, generic.CreateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
+        if "provider" in form.fields:
+            form.fields["provider"].queryset = scope_queryset_for_user(
+                Provider.objects.all(), self.request.user
+            )
+        if "billing_cycle" in form.fields:
+            form.fields["billing_cycle"].queryset = scope_queryset_for_user(
+                BillingCycle.objects.all(), self.request.user
+            )
         for field_name in ("start_date", "next_billing_date", "cancellation_date"):
             if field_name in form.fields:
                 form.fields[field_name].widget.input_type = "date"
         return form
 
+
+class SubscriptionCreateView(
+    OwnerAssignCreateMixin, LoginRequiredMixin, SubscriptionFormMixin, generic.CreateView
+):
     def form_valid(self, form):
         response = super().form_valid(form)
         SubscriptionHistory.objects.create(
@@ -182,7 +257,13 @@ class SubscriptionCreateView(LoginRequiredMixin, generic.CreateView):
         return response
 
 
-class SubscriptionUpdateView(SubscriptionCreateView, generic.UpdateView):
+class SubscriptionUpdateView(
+    UserScopedQuerysetMixin,
+    OwnerAssignCreateMixin,
+    LoginRequiredMixin,
+    SubscriptionFormMixin,
+    generic.UpdateView,
+):
     def form_valid(self, form):
         changed = form.changed_data.copy()
         response = super().form_valid(form)
@@ -195,7 +276,7 @@ class SubscriptionUpdateView(SubscriptionCreateView, generic.UpdateView):
         return response
 
 
-class SubscriptionDeleteView(LoginRequiredMixin, generic.DeleteView):
+class SubscriptionDeleteView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.DeleteView):
     model = Subscription
     template_name = "subscriptions/confirm_delete.html"
     success_url = reverse_lazy("subscriptions:subscription-list")
@@ -205,7 +286,8 @@ class SubscriptionStatusActionView(LoginRequiredMixin, View):
     action_name = ""
 
     def post(self, request, pk):
-        subscription = get_object_or_404(Subscription, pk=pk)
+        queryset = scope_queryset_for_user(Subscription.objects.all(), request.user)
+        subscription = get_object_or_404(queryset, pk=pk)
         error = self.perform_action(subscription)
         if error:
             messages.error(request, error)
@@ -258,9 +340,15 @@ class SubscriptionCancelView(SubscriptionStatusActionView):
         return None
 
 
-class NotificationRuleListView(LoginRequiredMixin, generic.ListView):
+class NotificationRuleListView(
+    UserScopedQuerysetMixin, LoginRequiredMixin, generic.ListView
+):
     model = NotificationRule
     template_name = "subscriptions/notificationrule_list.html"
+    owner_lookup = "subscription__owner"
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("subscription")
 
 
 class NotificationRuleCreateView(LoginRequiredMixin, generic.CreateView):
@@ -269,20 +357,37 @@ class NotificationRuleCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = "subscriptions/form.html"
     success_url = reverse_lazy("subscriptions:notificationrule-list")
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        if "subscription" in form.fields:
+            form.fields["subscription"].queryset = scope_queryset_for_user(
+                Subscription.objects.all(), self.request.user
+            )
+        return form
 
-class NotificationRuleUpdateView(NotificationRuleCreateView, generic.UpdateView):
-    pass
+
+class NotificationRuleUpdateView(
+    UserScopedQuerysetMixin, NotificationRuleCreateView, generic.UpdateView
+):
+    owner_lookup = "subscription__owner"
 
 
-class NotificationRuleDeleteView(LoginRequiredMixin, generic.DeleteView):
+class NotificationRuleDeleteView(
+    UserScopedQuerysetMixin, LoginRequiredMixin, generic.DeleteView
+):
     model = NotificationRule
     template_name = "subscriptions/confirm_delete.html"
     success_url = reverse_lazy("subscriptions:notificationrule-list")
+    owner_lookup = "subscription__owner"
 
 
-class RenewalEventListView(LoginRequiredMixin, generic.ListView):
+class RenewalEventListView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.ListView):
     model = RenewalEvent
     template_name = "subscriptions/renewalevent_list.html"
+    owner_lookup = "subscription__owner"
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("subscription")
 
 
 class RenewalEventCreateView(LoginRequiredMixin, generic.CreateView):
@@ -293,16 +398,23 @@ class RenewalEventCreateView(LoginRequiredMixin, generic.CreateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
+        if "subscription" in form.fields:
+            form.fields["subscription"].queryset = scope_queryset_for_user(
+                Subscription.objects.all(), self.request.user
+            )
         if "renewal_date" in form.fields:
             form.fields["renewal_date"].widget.input_type = "date"
         return form
 
 
-class RenewalEventUpdateView(RenewalEventCreateView, generic.UpdateView):
-    pass
+class RenewalEventUpdateView(
+    UserScopedQuerysetMixin, RenewalEventCreateView, generic.UpdateView
+):
+    owner_lookup = "subscription__owner"
 
 
-class RenewalEventDeleteView(LoginRequiredMixin, generic.DeleteView):
+class RenewalEventDeleteView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.DeleteView):
     model = RenewalEvent
     template_name = "subscriptions/confirm_delete.html"
     success_url = reverse_lazy("subscriptions:renewalevent-list")
+    owner_lookup = "subscription__owner"
