@@ -1,5 +1,7 @@
 # Subscription Intelligence Research Platform (SIRP)
 
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?name=ci-cd-primer&type=git&repository=sito8943%2Fsirp&branch=main&instance_type=free&regions=fra&instances_min=0&autoscaling_sleep_idle_delay=3900&env%5BDJANGO_ALLOWED_HOSTS%5D=%7B%7B+KOYEB_PUBLIC_DOMAIN+%7D%7D&ports=5000%3Bhttp%3B%2F&hc_protocol%5B5000%5D=tcp&hc_grace_period%5B5000%5D=5&hc_interval%5B5000%5D=30&hc_restart_limit%5B5000%5D=3&hc_timeout%5B5000%5D=5&hc_path%5B5000%5D=%2F&hc_method%5B5000%5D=get)
+
 <img width="2940" height="1912" alt="image" src="https://github.com/user-attachments/assets/d6efec08-9017-43b7-9dd5-156e9be9388d" />
 
 The Subscription Intelligence Research Platform (SIRP) is a research-grade subscription tracking system implemented using **Domain-Driven Design (DDD)**.
