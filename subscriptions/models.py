@@ -2,6 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 from uuid import uuid4
 
+from django.conf import settings
 from django.db import models
 
 from .currency import convert_to_base
@@ -37,12 +38,19 @@ class NotificationTiming(models.TextChoices):
 
 class BillingCycle(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="billing_cycles",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     interval = models.PositiveIntegerField(help_text="Number of units between renewals.")
     unit = models.CharField(max_length=16, choices=BillingCycleUnit.choices)
 
     class Meta:
         ordering = ["interval", "unit"]
-        unique_together = ("interval", "unit")
+        unique_together = ("owner", "interval", "unit")
 
     def __str__(self) -> str:
         return f"Every {self.interval} {self.unit}"
@@ -74,6 +82,13 @@ class BillingCycle(TimeStampedModel):
 
 class Provider(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="providers",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=100)
     website = models.URLField(blank=True)
@@ -87,6 +102,13 @@ class Provider(TimeStampedModel):
 
 class Subscription(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="subscriptions",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     name = models.CharField(max_length=255)
     provider = models.ForeignKey(
         Provider, related_name="subscriptions", on_delete=models.PROTECT

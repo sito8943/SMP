@@ -5,6 +5,7 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import Iterable
 
+from django.contrib.auth.models import AbstractBaseUser
 from django.utils import timezone
 
 from .currency import convert_to_base
@@ -26,12 +27,12 @@ def summarize_costs(subscriptions: Iterable[Subscription]) -> SubscriptionCostSu
     return SubscriptionCostSummary(monthly_total=monthly, annual_total=annual)
 
 
-def upcoming_renewals(days: int = 30) -> list[RenewalEvent]:
+def upcoming_renewals(days: int = 30, user: AbstractBaseUser | None = None) -> list[RenewalEvent]:
     limit_date = timezone.now() + timedelta(days=days)
-    return list(
-        RenewalEvent.objects.select_related("subscription").filter(
-            is_processed=False,
-            renewal_date__lte=limit_date,
-        )
-        .order_by("renewal_date")[:25]
+    queryset = RenewalEvent.objects.select_related("subscription").filter(
+        is_processed=False,
+        renewal_date__lte=limit_date,
     )
+    if user is not None and not user.is_superuser:
+        queryset = queryset.filter(subscription__owner=user)
+    return list(queryset.order_by("renewal_date")[:25])

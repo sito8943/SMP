@@ -1,14 +1,14 @@
 """
 Django settings for the SIRP console.
 """
-
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
 SECRET_KEY = "django-insecure-sirp-placeholder-secret-key"
 DEBUG = True
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0,[::1]").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -71,7 +71,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = "login"

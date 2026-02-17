@@ -15,6 +15,15 @@
         background: #fff;
         border-bottom: 1px solid #e5e5e5;
       }
+      .sirp-logo {
+        white-space: nowrap;
+        font-weight: 600;
+      }
+      .sirp-auth-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
       .uk-card {
         border: 1px solid #eaeaea;
       }
@@ -30,6 +39,11 @@
       body {
         background: #f8fafc;
       }
+      @media (max-width: 959px) {
+        .sirp-logo {
+          font-size: 1.7rem;
+        }
+      }
     </style>
   </head>
   <body>
@@ -37,9 +51,9 @@
       <div class="uk-container">
         <div class="uk-navbar" uk-navbar>
           <div class="uk-navbar-left">
-            <a class="uk-navbar-item uk-logo" href="{% url 'home' %}">SIRP Console</a>
+            <a class="uk-navbar-item uk-logo sirp-logo" href="{% url 'home' %}">SIRP Console</a>
             {% if user.is_authenticated %}
-            <ul class="uk-navbar-nav">
+            <ul class="uk-navbar-nav uk-visible@m">
               <li><a href="{% url 'subscriptions:dashboard' %}">Dashboard</a></li>
               <li><a href="{% url 'subscriptions:provider-list' %}">Providers</a></li>
               <li><a href="{% url 'subscriptions:billingcycle-list' %}">Billing Cycles</a></li>
@@ -51,17 +65,52 @@
           </div>
           <div class="uk-navbar-right">
             {% if user.is_authenticated %}
-            <form method="post" action="{% url 'logout' %}">
+            <form class="uk-visible@m" method="post" action="{% url 'logout' %}">
               {% csrf_token %}
               <button class="uk-button uk-button-text uk-text-bold" type="submit">Logout</button>
             </form>
             {% else %}
-            <a class="uk-button uk-button-primary" href="{% url 'login' %}">Sign in</a>
+            <div class="sirp-auth-actions uk-visible@m">
+              <a class="uk-button uk-button-default" href="{% url 'signup' %}">Sign up</a>
+              <a class="uk-button uk-button-primary" href="{% url 'login' %}">Sign in</a>
+            </div>
             {% endif %}
+            <a class="uk-navbar-toggle uk-hidden@m" href="#mobile-nav" uk-toggle>
+              <span uk-navbar-toggle-icon></span>
+            </a>
           </div>
         </div>
       </div>
     </nav>
+    <div id="mobile-nav" uk-offcanvas="overlay: true; flip: true">
+      <div class="uk-offcanvas-bar">
+        <button class="uk-offcanvas-close" type="button" uk-close></button>
+        <h3 class="uk-margin-remove-top">SIRP Console</h3>
+        {% if user.is_authenticated %}
+        <ul class="uk-nav uk-nav-default uk-margin-top">
+          <li><a href="{% url 'subscriptions:dashboard' %}">Dashboard</a></li>
+          <li><a href="{% url 'subscriptions:provider-list' %}">Providers</a></li>
+          <li><a href="{% url 'subscriptions:billingcycle-list' %}">Billing Cycles</a></li>
+          <li><a href="{% url 'subscriptions:subscription-list' %}">Subscriptions</a></li>
+          <li><a href="{% url 'subscriptions:notificationrule-list' %}">Notifications</a></li>
+          <li><a href="{% url 'subscriptions:renewalevent-list' %}">Renewals</a></li>
+        </ul>
+        <form method="post" action="{% url 'logout' %}" class="uk-margin-top">
+          {% csrf_token %}
+          <button class="uk-button uk-button-default uk-width-1-1" type="submit">Logout</button>
+        </form>
+        {% else %}
+        <div class="uk-grid-small uk-margin-top" uk-grid>
+          <div class="uk-width-1-1">
+            <a class="uk-button uk-button-primary uk-width-1-1" href="{% url 'login' %}">Sign in</a>
+          </div>
+          <div class="uk-width-1-1">
+            <a class="uk-button uk-button-default uk-width-1-1" href="{% url 'signup' %}">Sign up</a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
 
     <main class="uk-section">
       <div class="uk-container">

@@ -7,7 +7,10 @@
     <p class="uk-text-lead">
       Research-driven control over recurring subscriptions so you can predict costs, avoid surprise renewals, and make smarter financial decisions.
     </p>
-    <a class="uk-button uk-button-primary uk-button-large" href="{% url 'login' %}">Access the console</a>
+    <div class="uk-flex uk-flex-center uk-grid-small" uk-grid>
+      <div><a class="uk-button uk-button-primary uk-button-large" href="{% url 'signup' %}">Create account</a></div>
+      <div><a class="uk-button uk-button-default uk-button-large" href="{% url 'login' %}">I already have access</a></div>
+    </div>
   </div>
 </section>
 
@@ -35,8 +38,8 @@
     </div>
     <div class="uk-card uk-card-secondary uk-card-body uk-margin-top">
       <h3 class="uk-card-title">Ready to take control?</h3>
-      <p>Sign in to register subscriptions, pause or cancel services, and centralize your renewal planning.</p>
-      <a class="uk-button uk-button-default" href="{% url 'login' %}">Sign in</a>
+      <p>Create an account to register subscriptions, pause or cancel services, and centralize your renewal planning.</p>
+      <a class="uk-button uk-button-default" href="{% url 'signup' %}">Sign up</a>
     </div>
   </div>
 </section>

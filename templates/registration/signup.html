@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load form_extras %}
-{% block title %}Login | SIRP{% endblock %}
+{% block title %}Sign up | SIRP{% endblock %}
 {% block content %}
 <div class="uk-flex uk-flex-center">
   <div class="uk-card uk-card-default uk-card-body uk-width-large">
-    <h3 class="uk-card-title uk-text-center">Sign in</h3>
+    <h3 class="uk-card-title uk-text-center">Create account</h3>
     <form method="post" class="uk-form-stacked">
       {% csrf_token %}
       {% for field in form %}
@@ -13,15 +13,18 @@
         <div class="uk-form-controls">
           {{ field|add_class:"uk-input" }}
         </div>
+        {% if field.help_text %}
+        <p class="uk-text-meta">{{ field.help_text }}</p>
+        {% endif %}
         {% if field.errors %}
         <p class="uk-text-danger">{{ field.errors|join:", " }}</p>
         {% endif %}
       </div>
       {% endfor %}
-      <button class="uk-button uk-button-primary uk-width-1-1" type="submit">Sign in</button>
+      <button class="uk-button uk-button-primary uk-width-1-1" type="submit">Sign up</button>
     </form>
     <p class="uk-text-meta uk-margin-top uk-text-center">
-      New here? <a href="{% url 'signup' %}">Create an account</a>
+      Already registered? <a href="{% url 'login' %}">Sign in</a>
     </p>
   </div>
 </div>
