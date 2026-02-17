@@ -1,1 +1,1 @@
-web: gunicorn wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --timeout 120 --graceful-timeout 30 --keep-alive 5 --access-logfile - --error-logfile -
+web: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && exec gunicorn wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-1} --timeout 120 --graceful-timeout 30 --keep-alive 5 --access-logfile - --error-logfile -"
