@@ -3,6 +3,9 @@ Django settings for the SIRP console.
 """
 import os
 from pathlib import Path
+from urllib.parse import quote_plus
+
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -51,12 +54,35 @@ TEMPLATES = [
 WSGI_APPLICATION = "wsgi.application"
 ASGI_APPLICATION = "asgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("KOYEB_DATABASE_URL")
+
+if not DATABASE_URL:
+    db_name = os.getenv("KOYEB_DB_NAME") or os.getenv("POSTGRES_DB")
+    db_user = os.getenv("KOYEB_DB_USER") or os.getenv("POSTGRES_USER")
+    db_password = os.getenv("KOYEB_DB_PASSWORD") or os.getenv("POSTGRES_PASSWORD")
+    db_host = os.getenv("KOYEB_DB_HOST") or os.getenv("POSTGRES_HOST")
+
+    if db_name and db_user and db_password and db_host:
+        DATABASE_URL = (
+            f"postgresql://{quote_plus(db_user)}:{quote_plus(db_password)}"
+            f"@{db_host}/{db_name}?sslmode=require"
+        )
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
