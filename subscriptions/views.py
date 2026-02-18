@@ -1,13 +1,14 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View, generic
 
+from .forms import SignInForm, SignUpForm
 from .models import (
     BillingCycle,
     NotificationRule,
@@ -26,8 +27,14 @@ def scope_queryset_for_user(queryset, user, owner_lookup: str = "owner"):
     return queryset.filter(**{owner_lookup: user})
 
 
+class SignInView(auth_views.LoginView):
+    form_class = SignInForm
+    template_name = "registration/login.html"
+    redirect_authenticated_user = True
+
+
 class SignUpView(generic.CreateView):
-    form_class = UserCreationForm
+    form_class = SignUpForm
     template_name = "registration/signup.html"
     success_url = reverse_lazy("subscriptions:dashboard")
 
@@ -39,6 +46,12 @@ class SignUpView(generic.CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         login(self.request, self.object)
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        if "username" in form.errors:
+            response.status_code = 409
         return response
 
 

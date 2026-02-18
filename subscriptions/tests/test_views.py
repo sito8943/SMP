@@ -55,6 +55,35 @@ class SignUpFlowTests(TestCase):
         self.assertFalse(created.is_superuser)
         self.assertEqual(str(created.pk), self.client.session.get("_auth_user_id"))
 
+    def test_signup_existing_username_returns_conflict_message(self):
+        get_user_model().objects.create_user(
+            username="new-user",
+            password="Strong-pass-123",
+        )
+        payload = {
+            "username": "new-user",
+            "password1": "Strong-pass-123",
+            "password2": "Strong-pass-123",
+        }
+
+        response = self.client.post(reverse("signup"), payload)
+
+        self.assertEqual(response.status_code, 409)
+        self.assertContains(response, "Username already exists.")
+
+
+class LoginFlowTests(TestCase):
+    def test_unknown_user_shows_invalid_credentials_error(self):
+        payload = {
+            "username": "ghost-user",
+            "password": "bad-password",
+        }
+
+        response = self.client.post(reverse("login"), payload)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Incorrect credentials.")
+
 
 class DashboardViewTests(TestCase):
     def setUp(self):
