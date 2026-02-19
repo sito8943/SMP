@@ -1,5 +1,5 @@
 """
-Django settings for the SIRP console.
+Django settings for the SMP console.
 """
 import os
 from pathlib import Path
@@ -9,7 +9,7 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent
 
-SECRET_KEY = "django-insecure-sirp-placeholder-secret-key"
+SECRET_KEY = "django-insecure-smp-placeholder-secret-key"
 DEBUG = True
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0,[::1]").split(",")
 

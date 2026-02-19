@@ -1,6 +1,6 @@
-# Subscription Intelligence Research Platform
+# Subscription Manager Platform
 
-The Subscription Intelligence Research Platform (SIRP) is a research-driven subscription manager designed to help people have complete control over recurring subscriptions, such as streaming platforms, domains, software, and memberships. The application allows users to register subscriptions with different billing cycles (monthly, annually, or others), automatically calculate the actual cost per month and per year, manage statuses such as active, paused, or canceled, and generate reminders before each renewal to avoid unexpected charges. It also offers a clear overview of recurring spending, change histories, and support for custom notification rules, facilitating informed financial decision-making and promoting more conscious consumption of digital services.
+The Subscription Manager Platform (SMP) is a research-driven subscription manager designed to help people have complete control over recurring subscriptions, such as streaming platforms, domains, software, and memberships. The application allows users to register subscriptions with different billing cycles (monthly, annually, or others), automatically calculate the actual cost per month and per year, manage statuses such as active, paused, or canceled, and generate reminders before each renewal to avoid unexpected charges. It also offers a clear overview of recurring spending, change histories, and support for custom notification rules, facilitating informed financial decision-making and promoting more conscious consumption of digital services.
 
 ## Software Engineering
 

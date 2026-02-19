@@ -2,24 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>{% block title %}SIRP Admin{% endblock %}</title>
+    <title>{% block title %}SMP Admin{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.13/dist/css/uikit.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.13/dist/js/uikit.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.13/dist/js/uikit-icons.min.js"></script>
     <style>
       :root {
-        --sirp-primary: #1e73be;
+        --smp-primary: #1e73be;
       }
       .uk-navbar-container {
         background: #fff;
         border-bottom: 1px solid #e5e5e5;
       }
-      .sirp-logo {
+      .smp-logo {
         white-space: nowrap;
         font-weight: 600;
       }
-      .sirp-auth-actions {
+      .smp-auth-actions {
         display: flex;
         align-items: center;
         gap: 8px;
@@ -30,7 +30,7 @@
       .uk-button-primary,
       .uk-badge-primary,
       .uk-subnav-pill > .uk-active > a {
-        background-color: var(--sirp-primary);
+        background-color: var(--smp-primary);
       }
       .uk-button-primary:focus,
       .uk-button-primary:hover {
@@ -40,7 +40,7 @@
         background: #f8fafc;
       }
       @media (max-width: 959px) {
-        .sirp-logo {
+        .smp-logo {
           font-size: 1.7rem;
         }
       }
@@ -51,7 +51,7 @@
       <div class="uk-container">
         <div class="uk-navbar" uk-navbar>
           <div class="uk-navbar-left">
-            <a class="uk-navbar-item uk-logo sirp-logo" href="{% url 'home' %}">SIRP Console</a>
+            <a class="uk-navbar-item uk-logo smp-logo" href="{% url 'home' %}">SMP Console</a>
             {% if user.is_authenticated %}
             <ul class="uk-navbar-nav uk-visible@m">
               <li><a href="{% url 'subscriptions:dashboard' %}">Dashboard</a></li>
@@ -70,7 +70,7 @@
               <button class="uk-button uk-button-text uk-text-bold" type="submit">Logout</button>
             </form>
             {% else %}
-            <div class="sirp-auth-actions uk-visible@m">
+            <div class="smp-auth-actions uk-visible@m">
               <a class="uk-button uk-button-default" href="{% url 'signup' %}">Sign up</a>
               <a class="uk-button uk-button-primary" href="{% url 'login' %}">Sign in</a>
             </div>
@@ -85,7 +85,7 @@
     <div id="mobile-nav" uk-offcanvas="overlay: true; flip: true">
       <div class="uk-offcanvas-bar">
         <button class="uk-offcanvas-close" type="button" uk-close></button>
-        <h3 class="uk-margin-remove-top">SIRP Console</h3>
+        <h3 class="uk-margin-remove-top">SMP Console</h3>
         {% if user.is_authenticated %}
         <ul class="uk-nav uk-nav-default uk-margin-top">
           <li><a href="{% url 'subscriptions:dashboard' %}">Dashboard</a></li>

@@ -22,7 +22,7 @@ class LandingPageTests(TestCase):
         response = self.client.get(reverse("home"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Subscription Intelligence Research Platform")
+        self.assertContains(response, "Subscription Manager Platform")
         self.assertContains(response, "Create account")
 
     def test_authenticated_user_is_redirected_to_dashboard(self):
