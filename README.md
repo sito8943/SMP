@@ -47,6 +47,7 @@ SIRP is a Django web application to manage recurring subscriptions with user-sco
 ├── wsgi.py
 ├── Procfile
 ├── pyproject.toml
+├── requirements.in
 ├── requirements.txt
 ├── templates/
 ├── subscriptions/
@@ -59,7 +60,9 @@ SIRP is a Django web application to manage recurring subscriptions with user-sco
 │       ├── test_views.py
 │       ├── test_services.py
 │       └── test_models.py
-└── .github/workflows/ci.yml
+└── .github/
+    ├── dependabot.yml
+    └── workflows/ci.yml
 ```
 
 ## Local Setup
@@ -75,6 +78,35 @@ source .venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
+```
+
+## Dependency Management
+
+Install `pip-tools` once in your active virtualenv:
+
+```bash
+pip install pip-tools
+```
+
+- `requirements.in` contains direct dependencies.
+- `requirements.txt` is the lock file consumed by local setup and CI.
+
+Regenerate lock file without upgrading versions:
+
+```bash
+pip-compile --output-file=requirements.txt requirements.in
+```
+
+Upgrade all dependencies and refresh lock file:
+
+```bash
+pip-compile --upgrade --output-file=requirements.txt requirements.in
+```
+
+Upgrade a single dependency and refresh lock file:
+
+```bash
+pip-compile --upgrade-package Django --output-file=requirements.txt requirements.in
 ```
 
 ## Environment Variables
