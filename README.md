@@ -4,130 +4,175 @@
 
 <img width="2940" height="1912" alt="image" src="https://github.com/user-attachments/assets/d6efec08-9017-43b7-9dd5-156e9be9388d" />
 
-The Subscription Intelligence Research Platform (SIRP) is a research-grade subscription tracking system implemented using **Domain-Driven Design (DDD)**.
+SIRP is a Django web application to manage recurring subscriptions with user-scoped data, dashboards, lifecycle actions, and renewal tracking.
 
-## ⚙️ Plain Django Scaffold
+## Features
 
-A vanilla Django project (no custom functionality) now lives under `sirp_django_project/`.
-Run it like any default Django install:
+- Authentication: sign up, sign in, sign out.
+- User-scoped CRUD for:
+  - Providers
+  - Billing cycles
+  - Subscriptions
+  - Notification rules
+  - Renewal events
+- Subscription lifecycle actions:
+  - Pause
+  - Resume
+  - Cancel
+- Subscription history timeline (created/updated/status changes).
+- Dashboard with:
+  - Entity counts
+  - Monthly and annual totals (base currency)
+  - Upcoming renewals
+- Subscription list filters (provider, status, cost range, ordering).
+
+## Tech Stack
+
+- Python + Django 5
+- Templates + UIkit
+- Gunicorn + WhiteNoise
+- PostgreSQL (primary) via `DATABASE_URL`
+- SQLite fallback for local/dev convenience
+- Quality tooling: Ruff + mypy + pre-commit
+- CI: GitHub Actions
+
+## Project Structure
+
+```text
+.
+├── asgi.py
+├── manage.py
+├── settings.py
+├── urls.py
+├── wsgi.py
+├── Procfile
+├── pyproject.toml
+├── requirements.txt
+├── templates/
+├── subscriptions/
+│   ├── models.py
+│   ├── views.py
+│   ├── forms.py
+│   ├── services.py
+│   ├── urls.py
+│   └── tests/
+│       ├── test_views.py
+│       ├── test_services.py
+│       └── test_models.py
+└── .github/workflows/ci.yml
+```
+
+## Local Setup
+
+1. Create and activate a virtual environment.
+2. Install dependencies.
+3. Run migrations.
+4. Start the server.
 
 ```bash
-cd sirp_django_project
-python3 manage.py migrate
-python3 manage.py runserver
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
 ```
 
-## ✅ Current Capabilities
+## Environment Variables
 
-- CRUD console with authentication, landing page, and dashboard summaries.
-- Subscription list filters by provider, status, and cost; shows monthly/annual spend aggregates.
-- Pause, resume, and cancel actions write to a subscription history timeline.
-- Notification rules, renewal events, and billing cycles managed through the UI.
-- Basic multi-currency awareness using configurable exchange rates in `settings.py`.
+Database configuration priority in `settings.py`:
 
-## 📁 Project Structure
+1. `DATABASE_URL`
+2. `KOYEB_DATABASE_URL`
+3. Built URL from split variables:
+   - `KOYEB_DB_NAME`, `KOYEB_DB_USER`, `KOYEB_DB_PASSWORD`, `KOYEB_DB_HOST`
+   - or `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`
+4. SQLite fallback (`db.sqlite3`)
 
-```
-subscriptions-ddd/
-├── subscriptions_ddd.py          # Domain Layer
-├── subscriptions_application.py  # Application Layer
-└── README.md                     # This documentation
-```
+Useful variables:
 
-## 🏗️ DDD Architecture
+- `DATABASE_URL`
+- `KOYEB_DATABASE_URL`
+- `KOYEB_DB_NAME`
+- `KOYEB_DB_USER`
+- `KOYEB_DB_PASSWORD`
+- `KOYEB_DB_HOST`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_HOST`
+- `DJANGO_ALLOWED_HOSTS`
 
-### Domain Model
+Example:
 
-```
-Subscription (Aggregate Root)
-  ├── provider: Provider
-  ├── cost: Money
-  ├── billing_cycle: BillingCycle
-  ├── status: SubscriptionStatus
-  ├── notification_rules: List[NotificationRule]
-  └── renewal_events: List[RenewalEvent]
-
-Provider (Entity)
-  ├── name: str
-  └── category: str
-
-RenewalEvent (Entity)
-  ├── renewal_date: datetime
-  └── amount: Money
+```bash
+export DATABASE_URL='postgresql://user:password@host/dbname?sslmode=require'
 ```
 
-## 🎯 DDD Concepts Implemented
+## Quality and Checks
 
-### 1. Value Objects
-- Money: Monetary amount with currency
-- BillingCycle: Billing cycle (interval + unit)
+### Ruff
 
-### 2. Entities
-- Provider: Service provider
-- RenewalEvent: Future renewal event
-- NotificationRule: Notification rule
+```bash
+ruff check .
+```
 
-### 3. Aggregates
-- Subscription: Manages lifecycle, billing, and renewals
+### mypy
 
-### 4. Domain Services
-- SubscriptionAnalysisService: Analysis and calculations
-- NotificationService: Notification management
+```bash
+mypy --config-file pyproject.toml
+```
 
-### 5. Repositories
-- ISubscriptionRepository, IProviderRepository
-- In-memory implementations
+### Django migration drift check
 
-### 6. Use Cases
-- CreateSubscriptionUseCase
-- UpdateSubscriptionCostUseCase
-- PauseSubscriptionUseCase
-- ResumeSubscriptionUseCase
-- CancelSubscriptionUseCase
-- AddNotificationRuleUseCase
-- GetSubscriptionInsightsUseCase
+```bash
+python manage.py makemigrations --check --dry-run
+```
 
-## 📊 Business Rules
+### Run tests
 
-### Subscriptions
-- States: ACTIVE, PAUSED, CANCELLED
-- Only active subscriptions contribute to expenses
-- Billing cycle determines renewal dates
-- Cancelled subscriptions generate no financial impact
-- Can be paused and resumed
-- Price changes update future events
+```bash
+python manage.py test
+```
 
-### Billing Cycles
-- Units: days, weeks, months, years
-- Positive intervals only
-- Monthly and annual equivalent cost calculation
-- Determine next renewal dates
+## Pre-commit
 
-### Renewal Events
-- Automatically generated for active subscriptions
-- Contain date and amount
-- Marked as processed upon renewal
-- Removed when subscription is cancelled
+Install git hooks:
 
-### Notifications
-- Configurable per subscription
-- Timing options: 1 day, 3 days, 1 week, 2 weeks before
-- Only for active subscriptions
-- Can be enabled or disabled
+```bash
+pre-commit install
+```
 
-### Financial Analysis
-- Monthly equivalent cost calculation
-- Annual equivalent cost calculation
-- Totals by provider category
-- Upcoming renewals
+Run all hooks manually:
 
-## 🚀 Possible Extensions
+```bash
+pre-commit run --all-files
+```
 
-- Provider API integration
-- Email/SMS alerts
-- Import from bank statements
-- Historical spending charts
-- Plan comparison
-- Free trial reminders
-- Export to Excel/CSV
-- Budgets and spending limits
+Configured hooks include:
+
+- Basic file hygiene hooks
+- Ruff
+- mypy
+- Django migration check (`makemigrations --check --dry-run`)
+
+## CI (GitHub Actions)
+
+`/.github/workflows/ci.yml` runs:
+
+1. Dependency install
+2. Ruff lint
+3. mypy type check
+4. Migration drift check
+5. Migrations
+6. Django startup smoke checks
+7. Test suite
+
+## Deployment
+
+`Procfile` runs:
+
+1. `python manage.py migrate --noinput`
+2. `python manage.py collectstatic --noinput`
+3. `gunicorn wsgi:application ...`
+
+For production, define environment variables in your platform (for example Koyeb) instead of relying on local `.env`.
