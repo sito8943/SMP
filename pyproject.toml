@@ -9,7 +9,7 @@ extend-exclude = [
 select = ["E", "F"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.14"
 files = [
   "asgi.py",
   "manage.py",
