@@ -18,3 +18,14 @@ repos:
     hooks:
     -   id: mypy
         args: [--config-file=pyproject.toml]
+-   repo: local
+    hooks:
+    -   id: django-makemigrations-check
+        name: django-makemigrations-check
+        entry: env DATABASE_URL= KOYEB_DATABASE_URL= KOYEB_DB_NAME= KOYEB_DB_USER= KOYEB_DB_PASSWORD= KOYEB_DB_HOST= POSTGRES_DB= POSTGRES_USER= POSTGRES_PASSWORD= POSTGRES_HOST= python manage.py makemigrations --check --dry-run
+        language: python
+        additional_dependencies:
+        - Django==5.2.11
+        - dj-database-url==3.1.1
+        pass_filenames: false
+        always_run: true
