@@ -62,6 +62,35 @@
         <td>{{ subscription.cost_amount }} {{ subscription.cost_currency }}</td>
         <td><span class="uk-label">{{ subscription.get_status_display }}</span></td>
         <td class="uk-text-right">
+          {% if subscription.status != "cancelled" %}
+            {% if subscription.provider.cancellation_url %}
+            <a
+              class="uk-button uk-button-secondary uk-button-small"
+              href="{{ subscription.provider.cancellation_url }}"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-provider-cancel-link
+              data-cancel-form-id="cancel-subscription-{{ subscription.pk }}"
+            >
+              Cancel on provider
+            </a>
+            <form
+              id="cancel-subscription-{{ subscription.pk }}"
+              method="post"
+              action="{% url 'subscriptions:subscription-cancel' subscription.pk %}"
+              class="uk-hidden"
+            >
+              {% csrf_token %}
+            </form>
+            {% else %}
+            <a
+              class="uk-button uk-button-default uk-button-small"
+              href="{% url 'subscriptions:provider-edit' subscription.provider.pk %}"
+            >
+              Add cancel link
+            </a>
+            {% endif %}
+          {% endif %}
           <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:subscription-edit' subscription.pk %}">Edit</a>
           <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:subscription-delete' subscription.pk %}">Delete</a>
         </td>
@@ -72,4 +101,24 @@
     </tbody>
   </table>
 </div>
+<script>
+  document.querySelectorAll("[data-provider-cancel-link]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const providerUrl = link.getAttribute("href");
+      const cancelFormId = link.dataset.cancelFormId;
+      const cancelForm = document.getElementById(cancelFormId);
+
+      window.open(providerUrl, "_blank", "noopener");
+
+      const confirmed = window.confirm(
+        "Did you complete the cancellation on the provider site? Click OK to mark this subscription as cancelled in SMP."
+      );
+
+      if (confirmed && cancelForm) {
+        cancelForm.submit();
+      }
+    });
+  });
+</script>
 {% endblock %}

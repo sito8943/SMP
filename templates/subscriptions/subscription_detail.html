@@ -43,6 +43,22 @@
     {% endif %}
     {% if object.status != "cancelled" %}
     <div>
+      {% if object.provider.cancellation_url %}
+      <a
+        class="uk-button uk-button-secondary"
+        href="{{ object.provider.cancellation_url }}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Go to provider cancellation page
+      </a>
+      {% else %}
+      <a class="uk-button uk-button-default" href="{% url 'subscriptions:provider-edit' object.provider.pk %}">
+        Add provider cancellation link
+      </a>
+      {% endif %}
+    </div>
+    <div>
       <form method="post" action="{% url 'subscriptions:subscription-cancel' object.pk %}">
         {% csrf_token %}
         <button class="uk-button uk-button-danger" type="submit">Cancel</button>
@@ -50,6 +66,13 @@
     </div>
     {% endif %}
   </div>
+  {% if object.status != "cancelled" %}
+  <div class="uk-alert-primary uk-margin-top" uk-alert>
+    <p class="uk-margin-remove">
+      Tip: cancel first on the provider website, then click <strong>Cancel</strong> here to keep your records accurate.
+    </p>
+  </div>
+  {% endif %}
 </div>
 
 <div class="uk-card uk-card-default uk-card-body uk-margin-top">

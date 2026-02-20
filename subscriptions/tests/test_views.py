@@ -218,14 +218,20 @@ class ProviderCRUDTests(TestCase):
     def test_create_provider_flow_assigns_owner(self):
         response = self.client.post(
             reverse("subscriptions:provider-add"),
-            {"name": "DevSuite", "category": "Software", "website": "https://devsuite.test"},
+            {
+                "name": "DevSuite",
+                "category": "Software",
+                "website": "https://devsuite.test",
+                "cancellation_url": "https://devsuite.test/cancel",
+            },
         )
 
         self.assertRedirects(response, reverse("subscriptions:provider-list"))
-        self.assertEqual(Provider.objects.count(), 1)
-        provider = Provider.objects.first()
+        self.assertEqual(Provider.objects.filter(owner=self.user).count(), 1)
+        provider = Provider.objects.get(owner=self.user, name="DevSuite")
         self.assertEqual(provider.name, "DevSuite")
         self.assertEqual(provider.owner, self.user)
+        self.assertEqual(provider.cancellation_url, "https://devsuite.test/cancel")
 
     def test_provider_list_requires_authentication(self):
         self.client.logout()
@@ -234,15 +240,26 @@ class ProviderCRUDTests(TestCase):
         expected = f"{login_url}?next={reverse('subscriptions:provider-list')}"
         self.assertRedirects(response, expected)
 
-    def test_provider_list_shows_only_own_records(self):
+    def test_provider_list_shows_own_and_shared_records_only(self):
         Provider.objects.create(owner=self.user, name="Mine", category="Software")
+        Provider.objects.create(owner=None, name="Shared", category="Streaming")
         other_user = get_user_model().objects.create_user("outsider", password="pass1234")
         Provider.objects.create(owner=other_user, name="Theirs", category="Streaming")
 
         response = self.client.get(reverse("subscriptions:provider-list"))
 
         self.assertContains(response, "Mine")
+        self.assertContains(response, "Shared")
         self.assertNotContains(response, "Theirs")
+
+    def test_cannot_edit_shared_provider(self):
+        shared_provider = Provider.objects.create(owner=None, name="Netflix", category="Streaming")
+
+        response = self.client.get(
+            reverse("subscriptions:provider-edit", args=[shared_provider.pk])
+        )
+
+        self.assertEqual(response.status_code, 404)
 
 
 class SubscriptionFeaturesTests(TestCase):
@@ -252,6 +269,7 @@ class SubscriptionFeaturesTests(TestCase):
             owner=self.user,
             name="DevSuite",
             category="Software",
+            cancellation_url="https://devsuite.test/cancel",
         )
         self.cycle = BillingCycle.objects.create(
             owner=self.user,
@@ -296,6 +314,31 @@ class SubscriptionFeaturesTests(TestCase):
 
         self.assertContains(response, "DevSuite Pro")
         self.assertNotContains(response, "Stream Basic")
+
+    def test_subscription_form_includes_shared_provider_choices(self):
+        Provider.objects.create(owner=None, name="Netflix", category="Streaming")
+
+        response = self.client.get(reverse("subscriptions:subscription-add"))
+
+        self.assertContains(response, "Netflix")
+
+    def test_subscription_list_shows_provider_cancel_action_when_link_exists(self):
+        response = self.client.get(reverse("subscriptions:subscription-list"))
+
+        self.assertContains(response, "Cancel on provider")
+        self.assertContains(response, "https://devsuite.test/cancel")
+        self.assertContains(
+            response,
+            reverse("subscriptions:subscription-cancel", args=[self.subscription.pk]),
+        )
+
+    def test_subscription_list_shows_add_cancel_link_action_when_missing(self):
+        self.provider.cancellation_url = ""
+        self.provider.save(update_fields=["cancellation_url"])
+
+        response = self.client.get(reverse("subscriptions:subscription-list"))
+
+        self.assertContains(response, "Add cancel link")
 
     def test_pause_resume_actions_record_history(self):
         pause_url = reverse("subscriptions:subscription-pause", args=[self.subscription.pk])
@@ -344,3 +387,21 @@ class SubscriptionFeaturesTests(TestCase):
 
         self.assertEqual(detail_response.status_code, 404)
         self.assertEqual(pause_response.status_code, 404)
+
+    def test_subscription_detail_shows_provider_cancellation_link(self):
+        response = self.client.get(
+            reverse("subscriptions:subscription-detail", args=[self.subscription.pk])
+        )
+
+        self.assertContains(response, "Go to provider cancellation page")
+        self.assertContains(response, "https://devsuite.test/cancel")
+
+    def test_subscription_detail_shows_fallback_when_provider_has_no_cancellation_link(self):
+        self.provider.cancellation_url = ""
+        self.provider.save(update_fields=["cancellation_url"])
+
+        response = self.client.get(
+            reverse("subscriptions:subscription-detail", args=[self.subscription.pk])
+        )
+
+        self.assertContains(response, "Add provider cancellation link")

@@ -92,6 +92,10 @@ class Provider(TimeStampedModel):
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=100)
     website = models.URLField(blank=True)
+    cancellation_url = models.URLField(
+        blank=True,
+        help_text="Direct page where users can cancel with this provider.",
+    )
 
     class Meta:
         ordering = ["name"]
