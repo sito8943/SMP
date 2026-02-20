@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -25,6 +26,14 @@ def scope_queryset_for_user(queryset, user, owner_lookup: str = "owner"):
     if user.is_superuser:
         return queryset
     return queryset.filter(**{owner_lookup: user})
+
+
+def scope_owned_or_shared_queryset(queryset, user, owner_lookup: str = "owner"):
+    if user.is_superuser:
+        return queryset
+    return queryset.filter(
+        Q(**{owner_lookup: user}) | Q(**{f"{owner_lookup}__isnull": True})
+    )
 
 
 class SignInView(auth_views.LoginView):
@@ -118,19 +127,25 @@ class DashboardView(LoginRequiredMixin, generic.TemplateView):
         return context
 
 
-class ProviderListView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.ListView):
+class ProviderListView(LoginRequiredMixin, generic.ListView):
     model = Provider
     template_name = "subscriptions/provider_list.html"
 
+    def get_queryset(self):
+        return scope_owned_or_shared_queryset(super().get_queryset(), self.request.user)
 
-class ProviderDetailView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.DetailView):
+
+class ProviderDetailView(LoginRequiredMixin, generic.DetailView):
     model = Provider
     template_name = "subscriptions/provider_detail.html"
+
+    def get_queryset(self):
+        return scope_owned_or_shared_queryset(super().get_queryset(), self.request.user)
 
 
 class ProviderCreateView(OwnerAssignCreateMixin, LoginRequiredMixin, generic.CreateView):
     model = Provider
-    fields = ["name", "category", "website"]
+    fields = ["name", "category", "website", "cancellation_url"]
     template_name = "subscriptions/form.html"
     success_url = reverse_lazy("subscriptions:provider-list")
 
@@ -199,7 +214,9 @@ class SubscriptionListView(UserScopedQuerysetMixin, LoginRequiredMixin, generic.
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["providers"] = scope_queryset_for_user(Provider.objects.all(), self.request.user)
+        context["providers"] = scope_owned_or_shared_queryset(
+            Provider.objects.all(), self.request.user
+        )
         context["selected_provider"] = self.request.GET.get("provider", "")
         context["selected_status"] = self.request.GET.get("status", "")
         context["cost_min"] = self.request.GET.get("cost_min", "")
@@ -244,7 +261,7 @@ class SubscriptionFormMixin:
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         if "provider" in form.fields:
-            form.fields["provider"].queryset = scope_queryset_for_user(
+            form.fields["provider"].queryset = scope_owned_or_shared_queryset(
                 Provider.objects.all(), self.request.user
             )
         if "billing_cycle" in form.fields:

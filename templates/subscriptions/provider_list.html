@@ -11,6 +11,7 @@
       <tr>
         <th>Name</th>
         <th>Category</th>
+        <th>Type</th>
         <th class="uk-text-right">Actions</th>
       </tr>
     </thead>
@@ -19,13 +20,24 @@
       <tr>
         <td><a href="{% url 'subscriptions:provider-detail' provider.pk %}">{{ provider.name }}</a></td>
         <td>{{ provider.category }}</td>
+        <td>
+          {% if provider.owner_id %}
+          <span class="uk-label">Private</span>
+          {% else %}
+          <span class="uk-label uk-label-success">Shared</span>
+          {% endif %}
+        </td>
         <td class="uk-text-right">
+          {% if request.user.is_superuser or provider.owner_id == request.user.id %}
           <a class="uk-button uk-button-default uk-button-small" href="{% url 'subscriptions:provider-edit' provider.pk %}">Edit</a>
           <a class="uk-button uk-button-danger uk-button-small" href="{% url 'subscriptions:provider-delete' provider.pk %}">Delete</a>
+          {% else %}
+          <span class="uk-text-meta">Read only</span>
+          {% endif %}
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="3">No providers yet.</td></tr>
+      <tr><td colspan="4">No providers yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>

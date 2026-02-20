@@ -5,8 +5,16 @@
   <h2 class="uk-card-title">{{ object.name }}</h2>
   <p><span class="uk-text-bold">Category:</span> {{ object.category }}</p>
   {% if object.website %}
-  <p><span class="uk-text-bold">Website:</span> <a href="{{ object.website }}" target="_blank">{{ object.website }}</a></p>
+  <p><span class="uk-text-bold">Website:</span> <a href="{{ object.website }}" target="_blank" rel="noopener noreferrer">{{ object.website }}</a></p>
   {% endif %}
+  {% if object.cancellation_url %}
+  <p>
+    <span class="uk-text-bold">Cancellation page:</span>
+    <a href="{{ object.cancellation_url }}" target="_blank" rel="noopener noreferrer">{{ object.cancellation_url }}</a>
+  </p>
+  {% endif %}
+  {% if request.user.is_superuser or object.owner_id == request.user.id %}
   <a class="uk-button uk-button-primary" href="{% url 'subscriptions:provider-edit' object.pk %}">Edit</a>
+  {% endif %}
 </div>
 {% endblock %}
